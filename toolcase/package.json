@@ -1,0 +1,11 @@
+{
+  "name": "toolcase",
+  "version": "3.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "zc",
+  "license": "ISC"
+}
