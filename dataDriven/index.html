@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>简单模仿vue数据驱动</title>
+    <style type="text/css">
+    </style>
+</head>
+
+<body>
+    <input type="text" oninput="fn(event)">
+    <div id="demo">
+        <div v-text="text"></div>
+    </div>
+</body>
+
+<script type="text/javascript">
+    class Vue {
+        constructor(options) {
+            this.$options = options;
+            this._data = options.data;
+            this.$el = document.querySelector(options.el);
+            Object.keys(options.data).forEach(key => this._proxy(key))//观察this.name,返回this.data.name
+            observer(options.data)//观察this.data
+            watch(this, this._render.bind(this), this._update.bind(this));
+        }
+        _proxy(key) {
+            const self = this;
+            Object.defineProperty(self, key, {
+                configurable: true,
+                enumerable: true,
+                get: function proxyGetter() {
+                    return self._data[key]
+                },
+                set: function proxySetter(val) {
+                    self._data[key] = val
+                }
+            })
+        }
+        _update() {
+            this._render.call(this)
+        }
+        _render() {
+            this._bindText();
+        }
+
+        _bindText() {
+            let textDOMs = this.$el.querySelectorAll('[v-text]'),
+                bindText;
+            for (let i = 0; i < textDOMs.length; i++) {
+                bindText = textDOMs[i].getAttribute('v-text');
+                let data = this._data[bindText];
+                if (data) {
+                    textDOMs[i].innerHTML = data;
+                }
+            }
+        }
+    }
+
+    function observer(value, cb) {
+        Object.keys(value).forEach((key) => defineReactive(value, key, value[key], cb))
+    }
+
+    function defineReactive(obj, key, val, cb) {
+        const dep = new Dep()//为this.data,每个属性添加观察者时,生成对应watcher集合
+        Object.defineProperty(obj, key, {
+            enumerable: true,
+            configurable: true,
+            get: () => {
+                if (Dep.target) {
+                    dep.add(Dep.target)
+                }
+                return val
+            },
+            set: newVal => {
+                if (newVal === val)
+                    return
+                val = newVal
+                dep.notify()
+            }
+        })
+    }
+    function watch(vm, exp, cb) {
+        Dep.target = new Watcher(vm, cb);
+        return exp()
+    }
+
+    class Watcher {
+        constructor(vm, cb) {
+            this.cb = cb
+            this.vm = vm
+        }
+        update() {
+            this.run()
+        }
+        run() {
+            this.cb.call(this.vm)//updata
+        }
+    }
+
+    class Dep {//数据的观察者,可能是多个,当数据变化时,每个都要执行
+        constructor() {
+            this.subs = []
+        }
+        add(watcher) {
+            this.subs.push(watcher)
+        }
+        notify() {
+            this.subs.forEach((watcher) => watcher.cb())
+        }
+    }
+
+    Dep.target = null;
+</script>
+<script type="text/javascript">
+    var demo = new Vue({
+        el: '#demo',
+        data: {
+            text: "hello world"
+        }
+    });
+    function fn (e){
+        demo.text = e.target.value
+    }
+</script>
+
+</html>
