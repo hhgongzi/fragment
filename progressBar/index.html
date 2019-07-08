@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>canvas进度条</title>
+    <style type="text/css">
+        html,
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            background: #272822;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="2000" height="2000"></canvas>
+    <script type="text/javascript">
+        var cvs = document.getElementById("canvas");
+        var g = 0.1;//重力加速度
+        var points = [];//点集合
+        var prog = 1000;//进度终点
+        var currProg = 0;//进度起点
+        var Timer;//定时器
+        var raf;//animation
+        var scal = 0;//进度条比例
+        var rec = [300, 300, 400, 50];//进度条信息
+        var initSpeed = [[-2, 1], [-5, 3]];//初始速度 [[X,Xa],[Y,Ya]]
+        var stopAll = false;//最后终止
+    </script>
+    <script type="text/javascript">
+        class Point {
+            constructor(canvas, origin, speed) {
+                this.canvas = canvas;
+
+                this.R = 1;
+                this.x = origin[0];
+                this.y = origin[1];
+                this.vx = speed[0];
+                this.vy = speed[1];
+                this.context = canvas.getContext("2d");
+                this.draw();
+            }
+            draw() {
+                this.R = Math.random() * 2;
+                this.context.beginPath();
+                this.context.fillStyle = "rgb(30,129,0)";
+                this.context.arc(this.x, this.y, this.R, 0, 2 * Math.PI);
+                this.context.fill()
+            }
+            move() {
+                this.y += this.vy;
+                this.x += this.vx;
+                this.vy += g;
+                this.draw();
+            }
+        };
+        Timer = setInterval(function () {//生成点
+            // for (let i = 0; i < 3; i++) {
+            points.push(new Point(cvs, [rec[0] + scal * rec[2], rec[1]], [initSpeed[0][0] + Math.random() * initSpeed[0][1], initSpeed[1][0] + Math.random() * initSpeed[1][1]]));
+            // }
+        }, 10)
+    </script>
+    <script type="text/javascript">
+        function bar(scale) {
+            var cxt = cvs.getContext("2d");
+            cxt.fillStyle = "black"
+            cxt.fillRect(...rec);//外进度条
+            if (scale >= 1) {
+                scale = 1;
+            }
+            // cxt.fillStyle = "rgb(" + 255 * Math.random() + "," + 255 * Math.random() + "," + 255 * Math.random() + ")"
+            cxt.fillStyle = "rgb(30,129,0)"
+            cxt.fillRect(rec[0], rec[01], rec[2] * scale, rec[3]);//内进度条
+        };
+    </script>
+    <script type="text/javascript">
+        function moveBall() {
+            cvs.getContext("2d").clearRect(0, 0, this.canvas.width, canvas.height);
+
+            points.forEach(element => {//所有点move
+                element.move()
+            });
+            bar(scal = currProg++ / prog);
+            //进度条进度
+            if (currProg >= 1000) {
+                clearInterval(Timer);
+                setTimeout(function () {//五秒后停止所有------------等待小球继续下落
+                    stopAll = true;
+                }, 5000)
+            };
+            if (!stopAll) {
+                raf = window.requestAnimationFrame(moveBall);
+            } else {
+                window.cancelAnimationFrame(raf)
+            };
+        }
+        raf = window.requestAnimationFrame(moveBall);
+    </script>
+
+</body>
+
+</html>
